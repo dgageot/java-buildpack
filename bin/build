@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+JAVA_VERSION="1.8.0_212"
+MAVEN_VERSION="3.6.1"
+
+layersdir=$1
+java_url="https://lang-jvm.s3.amazonaws.com/jdk/heroku-18/openjdk${JAVA_VERSION}.tar.gz"
+maven_url="https://apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz"
+
+echo "---> Java Buildpack"
+
+echo "---> Downloading and extracting java"
+if [[ ! -d ${layersdir}/java ]]; then
+    mkdir ${layersdir}/java
+    wget -q -O - ${java_url} | tar -xzf - -C ${layersdir}/java
+fi
+
+echo "---> Downloading and extracting maven"
+if [[ ! -d "${layersdir}/maven" ]]; then
+    mkdir ${layersdir}/maven
+    wget -q -O - ${maven_url} | tar -xzf - -C ${layersdir}/maven --strip-components=1
+fi
+
+echo "---> Preparing Maven cache"
+if [[ ! -d "${layersdir}/m2" ]]; then
+    mkdir -p ${layersdir}/m2/repo
+fi
+
+echo "---> Building application"
+export JAVA_HOME=${layersdir}/java
+export PATH=${layersdir}/maven/bin:$PATH
+mvn -DlocalRepository=${layersdir}/m2/repo --no-transfer-progress package -Dmaven.test.skip=true
+
+echo -e "cache = true\nlaunch = true\nmetadata = \"${JAVA_VERSION}\"" > ${layersdir}/java.toml
+echo -e "cache = true\nmetadata = \"${MAVEN_VERSION}\"" > ${layersdir}/maven.toml
+echo -e "cache = true" > ${layersdir}/m2.toml
+echo 'processes = [{ type = "web", command = "java -jar /workspace/target/hello.jar"}]' > "$layersdir/launch.toml"

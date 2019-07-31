@@ -1,0 +1,7 @@
+[buildpack]
+id = "net.gageot.buildpacks.java"
+version = "0.0.1"
+name = "Java Buildpack"
+
+[[stacks]]
+id = "heroku-18"
