@@ -30,7 +30,7 @@ fi
 echo "---> Building application"
 export JAVA_HOME=${layersdir}/java
 export PATH=${layersdir}/maven/bin:$PATH
-mvn -DlocalRepository=${layersdir}/m2/repo --no-transfer-progress package -Dmaven.test.skip=true
+mvn -Dmaven.repo.local=${layersdir}/m2/repo --no-transfer-progress package -Dmaven.test.skip=true
 
 echo -e "cache = true\nlaunch = true\nmetadata = \"${JAVA_VERSION}\"" > ${layersdir}/java.toml
 echo -e "cache = true\nmetadata = \"${MAVEN_VERSION}\"" > ${layersdir}/maven.toml
